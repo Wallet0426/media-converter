@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Youtube, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
+import SpinningLogo from './SpinningLogo';
 import { useI18n } from '@/lib/i18n/context';
 
 export default function Navbar() {
@@ -17,11 +18,9 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <a href="#converter" className="flex items-center gap-2">
-            <div className="bg-red-600 p-1.5 rounded-lg">
-              <Youtube className="text-white w-6 h-6" />
-            </div>
+            <SpinningLogo />
             <span className="font-display text-xl font-bold tracking-tight">
-              TubeConvert
+              Media-Converter
             </span>
           </a>
 

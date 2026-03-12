@@ -18,11 +18,10 @@ export default function DownloadButton({ jobId, fileName }: DownloadButtonProps)
       download={fileName}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-4 rounded-xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-200"
+      className="inline-flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-all mt-1"
     >
-      <Download className="w-5 h-5 shrink-0" />
-      <span className="truncate max-w-[200px]">{fileName}</span>
-      <span className="shrink-0">{t('download.button')}</span>
+      <Download className="w-4 h-4 shrink-0" />
+      {t('download.button')}
     </motion.a>
   );
 }

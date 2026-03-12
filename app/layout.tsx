@@ -3,7 +3,7 @@ import { I18nProvider } from "@/lib/i18n/context";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TubeConvert - YouTube & Twitch to MP3/MP4 Converter",
+  title: "Media-Converter - YouTube & Twitch to MP3/MP4 Converter",
   description: "YouTube, Twitch VOD 영상을 MP3, MP4로 빠르게 변환하세요. 무료, 빠르고 안전합니다.",
 };
 

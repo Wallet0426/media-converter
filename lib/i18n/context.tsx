@@ -19,7 +19,7 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | null>(null);
 
 const SUPPORTED_LOCALES: Locale[] = ['ko', 'en', 'ja', 'zh'];
-const STORAGE_KEY = 'tubeconvert-locale';
+const STORAGE_KEY = 'media-converter-locale';
 
 function detectLocale(): Locale {
   // 1. localStorage에서 저장된 설정 확인

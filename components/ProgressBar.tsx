@@ -21,14 +21,14 @@ export default function ProgressBar({ progress, status }: ProgressBarProps) {
 
   const barColor = {
     pending: 'from-slate-400 to-slate-500',
-    downloading: 'from-blue-500 to-blue-600',
-    converting: 'from-red-500 to-rose-500',
+    downloading: 'from-red-500 to-rose-500',
+    converting: 'from-red-600 to-rose-600',
     done: 'from-green-500 to-emerald-500',
     error: 'from-red-500 to-red-600',
   }[status] || 'from-red-500 to-rose-500';
 
   return (
-    <div className="w-full mt-5">
+    <div className="w-full mt-2">
       <div className="flex justify-between text-sm mb-2">
         <span className="text-slate-600 font-medium">{statusLabel}</span>
         <span className="text-slate-500 font-mono text-xs">{Math.round(progress)}%</span>

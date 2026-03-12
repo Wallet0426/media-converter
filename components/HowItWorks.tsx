@@ -31,7 +31,7 @@ export default function HowItWorks() {
               <div key={step.num} className="relative text-center">
                 {/* 연결선 (모바일 제외) */}
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] border-t-2 border-dashed border-slate-300" />
+                  <div className="hidden md:block absolute top-10 left-[calc(50%+40px)] right-[calc(-50%-8px)] border-t-2 border-dashed border-slate-300" />
                 )}
 
                 <div className="relative z-10 flex flex-col items-center">

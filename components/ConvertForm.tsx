@@ -9,84 +9,120 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertCircle,
+  Download,
+  X,
 } from 'lucide-react';
 import ProgressBar from './ProgressBar';
-import DownloadButton from './DownloadButton';
 import { useI18n } from '@/lib/i18n/context';
 
 type Format = 'mp3' | 'mp4';
-type ConvertState = 'idle' | 'converting' | 'done' | 'error';
+
+interface JobItem {
+  id: string;
+  url: string;
+  format: Format;
+  quality: string;
+  status: 'converting' | 'done' | 'error';
+  progress: number;
+  statusText: string;
+  title: string;
+  thumbnail: string;
+  fileName: string;
+  errorMsg: string;
+}
 
 export default function ConvertForm() {
   const { t } = useI18n();
   const [url, setUrl] = useState('');
   const [format, setFormat] = useState<Format>('mp3');
   const [quality, setQuality] = useState('best');
-  const [state, setState] = useState<ConvertState>('idle');
-  const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState('');
-  const [jobId, setJobId] = useState('');
-  const [fileName, setFileName] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [jobs, setJobs] = useState<JobItem[]>([]);
+  const pollingRefs = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
 
-  const stopPolling = useCallback(() => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
+  const stopPolling = useCallback((jobId: string) => {
+    const interval = pollingRefs.current.get(jobId);
+    if (interval) {
+      clearInterval(interval);
+      pollingRefs.current.delete(jobId);
     }
   }, []);
 
   useEffect(() => {
-    return () => stopPolling();
-  }, [stopPolling]);
+    return () => {
+      pollingRefs.current.forEach((interval) => clearInterval(interval));
+      pollingRefs.current.clear();
+    };
+  }, []);
+
+  const updateJob = useCallback((jobId: string, updates: Partial<JobItem>) => {
+    setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, ...updates } : j)));
+  }, []);
 
   const pollStatus = useCallback(
-    (id: string) => {
-      pollingRef.current = setInterval(async () => {
+    (jobId: string) => {
+      const interval = setInterval(async () => {
         try {
-          const res = await fetch(`/api/status/${id}`);
+          const res = await fetch(`/api/status/${jobId}`);
           const data = await res.json();
 
           if (data.error && data.status === undefined) {
-            stopPolling();
-            setState('error');
-            setErrorMsg(data.error);
+            stopPolling(jobId);
+            updateJob(jobId, { status: 'error', errorMsg: data.error });
             return;
           }
 
-          setProgress(data.progress || 0);
-          setStatusText(data.status || '');
+          const updates: Partial<JobItem> = {
+            progress: data.progress || 0,
+            statusText: data.status || '',
+          };
+          if (data.title) updates.title = data.title;
+          if (data.thumbnail) updates.thumbnail = data.thumbnail;
 
           if (data.status === 'done') {
-            stopPolling();
-            setState('done');
-            setFileName(data.fileName || 'download');
-            setProgress(100);
+            stopPolling(jobId);
+            updates.status = 'done';
+            updates.fileName = data.fileName || 'download';
+            updates.progress = 100;
           } else if (data.status === 'error') {
-            stopPolling();
-            setState('error');
-            setErrorMsg(data.error || t('converter.requestFailed'));
+            stopPolling(jobId);
+            updates.status = 'error';
+            updates.errorMsg = data.error || t('converter.requestFailed');
           }
+
+          updateJob(jobId, updates);
         } catch {
-          stopPolling();
-          setState('error');
-          setErrorMsg(t('converter.serverError'));
+          stopPolling(jobId);
+          updateJob(jobId, { status: 'error', errorMsg: t('converter.serverError') });
         }
       }, 1000);
+
+      pollingRefs.current.set(jobId, interval);
     },
-    [stopPolling, t]
+    [stopPolling, updateJob, t]
   );
 
   const handleConvert = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
 
-    setState('converting');
-    setProgress(0);
-    setErrorMsg('');
-    setFileName('');
-    setStatusText('pending');
+    const activeJobs = jobs.filter((j) => j.status === 'converting').length;
+    if (activeJobs >= 3) {
+      const limitJob: JobItem = {
+        id: crypto.randomUUID(),
+        url,
+        format,
+        quality,
+        status: 'error',
+        progress: 0,
+        statusText: '',
+        title: '',
+        thumbnail: '',
+        fileName: '',
+        errorMsg: t('converter.maxJobs'),
+      };
+      setJobs((prev) => [limitJob, ...prev]);
+      return;
+    }
 
     try {
       const res = await fetch('/api/convert', {
@@ -98,28 +134,64 @@ export default function ConvertForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setState('error');
-        setErrorMsg(data.error || t('converter.requestFailed'));
+        const errorJob: JobItem = {
+          id: crypto.randomUUID(),
+          url,
+          format,
+          quality,
+          status: 'error',
+          progress: 0,
+          statusText: '',
+          title: '',
+          thumbnail: '',
+          fileName: '',
+          errorMsg: data.error || t('converter.requestFailed'),
+        };
+        setJobs((prev) => [errorJob, ...prev]);
         return;
       }
 
-      setJobId(data.jobId);
+      const newJob: JobItem = {
+        id: data.jobId,
+        url,
+        format,
+        quality,
+        status: 'converting',
+        progress: 0,
+        statusText: 'pending',
+        title: '',
+        thumbnail: '',
+        fileName: '',
+        errorMsg: '',
+      };
+
+      setJobs((prev) => [newJob, ...prev]);
+      setUrl('');
       pollStatus(data.jobId);
     } catch {
-      setState('error');
-      setErrorMsg(t('converter.serverError'));
+      const errorJob: JobItem = {
+        id: crypto.randomUUID(),
+        url,
+        format,
+        quality,
+        status: 'error',
+        progress: 0,
+        statusText: '',
+        title: '',
+        thumbnail: '',
+        fileName: '',
+        errorMsg: t('converter.serverError'),
+      };
+      setJobs((prev) => [errorJob, ...prev]);
     }
   };
 
-  const handleReset = () => {
-    stopPolling();
-    setState('idle');
-    setUrl('');
-    setProgress(0);
-    setErrorMsg('');
-    setFileName('');
-    setJobId('');
+  const removeJob = (jobId: string) => {
+    stopPolling(jobId);
+    setJobs((prev) => prev.filter((j) => j.id !== jobId));
   };
+
+  const isConverting = jobs.some((j) => j.status === 'converting');
 
   return (
     <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-xl p-4 md:p-8 rounded-2xl md:rounded-3xl">
@@ -134,19 +206,14 @@ export default function ConvertForm() {
             className="block w-full pl-11 md:pl-12 pr-16 py-4 md:py-5 bg-slate-50 border border-slate-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none text-slate-900 text-sm md:text-base"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            disabled={state === 'converting'}
           />
           <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
             <button
               type="submit"
-              disabled={state === 'converting' || !url}
+              disabled={!url}
               className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {state === 'converting' ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <ArrowRight className="w-5 h-5" />
-              )}
+              <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -156,7 +223,6 @@ export default function ConvertForm() {
             <button
               type="button"
               onClick={() => { setFormat('mp3'); setQuality('best'); }}
-              disabled={state === 'converting'}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${
                 format === 'mp3'
                   ? 'bg-white text-red-600 shadow-sm'
@@ -169,7 +235,6 @@ export default function ConvertForm() {
             <button
               type="button"
               onClick={() => { setFormat('mp4'); setQuality('2160'); }}
-              disabled={state === 'converting'}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${
                 format === 'mp4'
                   ? 'bg-white text-red-600 shadow-sm'
@@ -185,7 +250,6 @@ export default function ConvertForm() {
             <select
               value={quality}
               onChange={(e) => setQuality(e.target.value)}
-              disabled={state === 'converting'}
               className="w-full px-5 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
             >
               <option value="best">{t('converter.bestAudio')}</option>
@@ -197,7 +261,6 @@ export default function ConvertForm() {
             <select
               value={quality}
               onChange={(e) => setQuality(e.target.value)}
-              disabled={state === 'converting'}
               className="w-full px-5 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
             >
               <option value="2160">{t('converter.4k')}</option>
@@ -210,46 +273,81 @@ export default function ConvertForm() {
         </div>
       </form>
 
-      {/* 진행률 바 */}
-      {state === 'converting' && (
-        <ProgressBar progress={progress} status={statusText} />
-      )}
-
-      {/* 완료 - 다운로드 버튼 */}
-      {state === 'done' && jobId && (
+      {/* Job 리스트 */}
+      {jobs.length > 0 && (
         <div className="mt-5 space-y-3">
-          <DownloadButton jobId={jobId} fileName={fileName} />
-          <button
-            onClick={handleReset}
-            className="w-full text-sm text-slate-500 hover:text-slate-700 py-2 transition-colors"
-          >
-            {t('converter.convertAnother')}
-          </button>
+          {jobs.map((job) => (
+            <div key={job.id}>
+              {job.status === 'error' ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-red-700 text-sm font-medium">{job.errorMsg}</p>
+                  </div>
+                  <button onClick={() => removeJob(job.id)} className="text-red-300 hover:text-red-500 transition-colors shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                >
+                  <div className="flex items-center gap-4">
+                    {job.thumbnail ? (
+                      <img
+                        src={job.thumbnail}
+                        alt={job.title}
+                        className="w-28 h-20 md:w-36 md:h-24 rounded-lg object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="w-28 h-20 md:w-36 md:h-24 rounded-lg bg-slate-200 shrink-0 animate-pulse" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      {job.title ? (
+                        <p className="text-sm font-semibold text-slate-900 line-clamp-2">{job.title}</p>
+                      ) : (
+                        <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse" />
+                      )}
+                      <p className="text-xs text-slate-400 mt-1">
+                        {job.format.toUpperCase()} · {job.quality === 'best' ? '320kbps' : job.quality + (job.format === 'mp3' ? 'kbps' : 'p')}
+                      </p>
+
+                      {job.status === 'converting' && (
+                        <ProgressBar progress={job.progress} status={job.statusText} />
+                      )}
+
+                      {job.status === 'done' && (
+                        <a
+                          href={`/api/download/${job.id}`}
+                          download={job.fileName}
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 transition-colors mt-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          {t('download.button')}
+                        </a>
+                      )}
+                    </div>
+                    {job.status === 'done' && (
+                      <button onClick={() => removeJob(job.id)} className="text-slate-300 hover:text-slate-500 transition-colors shrink-0 self-start">
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
-      {/* 에러 */}
-      {state === 'error' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-5 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3"
-        >
-          <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-red-700 text-sm font-medium">{errorMsg}</p>
-            <button
-              onClick={handleReset}
-              className="text-red-600 text-sm underline mt-1.5 hover:text-red-800"
-            >
-              {t('converter.tryAgain')}
-            </button>
-          </div>
-        </motion.div>
-      )}
-
       {/* 하단 배지 */}
-      {state === 'idle' && (
+      {jobs.length === 0 && (
         <div className="mt-6 flex items-center justify-center gap-4 md:gap-6 text-xs text-slate-400 font-medium uppercase tracking-wider">
           <span className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />

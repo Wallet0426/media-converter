@@ -39,6 +39,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'converter.tryAgain': '다시 시도',
     'converter.serverError': '서버 연결에 실패했습니다.',
     'converter.requestFailed': '요청에 실패했습니다.',
+    'converter.maxJobs': '최대 3개까지 동시에 변환할 수 있습니다.',
 
     // Progress
     'progress.pending': '준비 중...',
@@ -51,7 +52,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'download.button': '다운로드',
 
     // Features
-    'features.title': '왜 TubeConvert인가요?',
+    'features.title': '왜 Media-Converter인가요?',
     'features.subtitle':
       '크리에이터와 일반 사용자 모두를 위한 최고의 변환 도구를 제공합니다.',
     'features.fast.title': '번개처럼 빠른 속도',
@@ -121,7 +122,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.terms': '이용약관',
     'footer.privacy': '개인정보 처리방침',
     'footer.disclaimer': '면책 조항',
-    'footer.copyright': '© {year} TubeConvert. All rights reserved.',
+    'footer.copyright': '© {year} Media-Converter. All rights reserved.',
     'footer.madeWith': '콘텐츠를 사랑하는 분들을 위해 제작',
     'footer.personalUse': '⚠️ 개인 사용 목적으로만 이용해 주세요.',
   },
@@ -161,6 +162,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'converter.tryAgain': 'Try again',
     'converter.serverError': 'Failed to connect to server.',
     'converter.requestFailed': 'Request failed.',
+    'converter.maxJobs': 'You can convert up to 3 videos at a time.',
 
     'progress.pending': 'Preparing...',
     'progress.downloading': 'Downloading...',
@@ -170,7 +172,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'download.button': 'Download',
 
-    'features.title': 'Why choose TubeConvert?',
+    'features.title': 'Why choose Media-Converter?',
     'features.subtitle':
       'We provide the best tools for content creators and casual listeners alike.',
     'features.fast.title': 'Lightning Fast',
@@ -236,7 +238,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.terms': 'Terms of Service',
     'footer.privacy': 'Privacy Policy',
     'footer.disclaimer': 'Disclaimer',
-    'footer.copyright': '© {year} TubeConvert. All rights reserved.',
+    'footer.copyright': '© {year} Media-Converter. All rights reserved.',
     'footer.madeWith': 'Made with ❤️ for content lovers',
     'footer.personalUse': '⚠️ For personal use only.',
   },
@@ -276,6 +278,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'converter.tryAgain': 'もう一度',
     'converter.serverError': 'サーバーへの接続に失敗しました。',
     'converter.requestFailed': 'リクエストに失敗しました。',
+    'converter.maxJobs': '同時に変換できるのは最大3つまでです。',
 
     'progress.pending': '準備中...',
     'progress.downloading': 'ダウンロード中...',
@@ -285,7 +288,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'download.button': 'ダウンロード',
 
-    'features.title': 'TubeConvertが選ばれる理由',
+    'features.title': 'Media-Converterが選ばれる理由',
     'features.subtitle':
       'クリエイターにもリスナーにも最適な変換ツールを提供します。',
     'features.fast.title': '超高速変換',
@@ -351,7 +354,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.terms': '利用規約',
     'footer.privacy': 'プライバシーポリシー',
     'footer.disclaimer': '免責事項',
-    'footer.copyright': '© {year} TubeConvert. All rights reserved.',
+    'footer.copyright': '© {year} Media-Converter. All rights reserved.',
     'footer.madeWith': 'コンテンツを愛する皆さまのために',
     'footer.personalUse': '⚠️ 個人利用目的でのみご使用ください。',
   },
@@ -391,6 +394,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'converter.tryAgain': '重试',
     'converter.serverError': '无法连接到服务器。',
     'converter.requestFailed': '请求失败。',
+    'converter.maxJobs': '最多可同时转换3个视频。',
 
     'progress.pending': '准备中...',
     'progress.downloading': '下载中...',
@@ -400,7 +404,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'download.button': '下载',
 
-    'features.title': '为什么选择 TubeConvert？',
+    'features.title': '为什么选择 Media-Converter？',
     'features.subtitle': '为创作者和普通用户提供最佳转换工具。',
     'features.fast.title': '闪电般的速度',
     'features.fast.desc':
@@ -461,7 +465,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.terms': '服务条款',
     'footer.privacy': '隐私政策',
     'footer.disclaimer': '免责声明',
-    'footer.copyright': '© {year} TubeConvert. All rights reserved.',
+    'footer.copyright': '© {year} Media-Converter. All rights reserved.',
     'footer.madeWith': '为热爱内容的你而制作',
     'footer.personalUse': '⚠️ 请仅用于个人用途。',
   },

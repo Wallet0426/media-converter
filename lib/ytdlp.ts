@@ -1,8 +1,13 @@
-import { spawn } from 'child_process';
+import { spawn, execFile } from 'child_process';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { updateJob } from './jobs';
+
+const DENO_ENV = {
+  ...process.env,
+  PATH: `${process.env.HOME}/.deno/bin:${process.env.PATH}`,
+};
 
 function getTmpDir(jobId: string): string {
   const dir = path.join(os.tmpdir(), 'media-converter', jobId);
@@ -11,12 +16,39 @@ function getTmpDir(jobId: string): string {
 }
 
 function parseProgress(line: string): number | null {
-  // yt-dlp outputs lines like: [download]  45.2% of ~10.00MiB ...
   const match = line.match(/\[download\]\s+([\d.]+)%/);
   if (match) {
     return parseFloat(match[1]);
   }
   return null;
+}
+
+export function fetchVideoInfo(
+  jobId: string,
+  url: string
+): Promise<{ title: string; thumbnail: string }> {
+  return new Promise((resolve) => {
+    execFile(
+      'python3.12',
+      ['-m', 'yt_dlp', '--dump-json', '--no-download', '--no-playlist', url],
+      { env: DENO_ENV, timeout: 30000 },
+      (error, stdout) => {
+        if (error || !stdout) {
+          resolve({ title: '', thumbnail: '' });
+          return;
+        }
+        try {
+          const info = JSON.parse(stdout);
+          const title = info.title || info.fulltitle || '';
+          const thumbnail = info.thumbnail || info.thumbnails?.[info.thumbnails.length - 1]?.url || '';
+          updateJob(jobId, { title, thumbnail });
+          resolve({ title, thumbnail });
+        } catch {
+          resolve({ title: '', thumbnail: '' });
+        }
+      }
+    );
+  });
 }
 
 export function startDownload(
@@ -28,7 +60,12 @@ export function startDownload(
   const tmpDir = getTmpDir(jobId);
   const outputTemplate = path.join(tmpDir, '%(title)s.%(ext)s');
 
-  const args: string[] = ['-m', 'yt_dlp', '--newline', '--no-playlist'];
+  const args: string[] = [
+    '-m', 'yt_dlp',
+    '--newline',
+    '--no-playlist',
+  ];
+
 
   if (format === 'mp3') {
     args.push('-x', '--audio-format', 'mp3');
@@ -86,8 +123,9 @@ export function startDownload(
 
   updateJob(jobId, { status: 'downloading', progress: 0 });
 
-  const proc = spawn('python3', args, {
+  const proc = spawn('python3.12', args, {
     stdio: ['ignore', 'pipe', 'pipe'],
+    env: DENO_ENV,
   });
 
   proc.stdout.on('data', (data: Buffer) => {

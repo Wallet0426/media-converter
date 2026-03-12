@@ -1,12 +1,13 @@
 'use client';
 
-import { Zap, ShieldCheck, Smartphone, Youtube, Github, Twitter, Music, Film } from 'lucide-react';
+import { Zap, ShieldCheck, Smartphone, Github, Twitter, Music, Film } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import ConvertForm from '@/components/ConvertForm';
 import FeatureCard from '@/components/FeatureCard';
 import HowItWorks from '@/components/HowItWorks';
 import FaqSection from '@/components/FaqSection';
 import ScrollToTop from '@/components/ScrollToTop';
+import SpinningLogo from '@/components/SpinningLogo';
 import { useI18n } from '@/lib/i18n/context';
 
 export default function Home() {
@@ -145,11 +146,9 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-10 mb-12">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-5">
-                <div className="bg-red-600 p-1.5 rounded-lg">
-                  <Youtube className="text-white w-6 h-6" />
-                </div>
+                <SpinningLogo />
                 <span className="font-display text-xl font-bold tracking-tight">
-                  TubeConvert
+                  Media-Converter
                 </span>
               </div>
               <p className="text-slate-500 max-w-sm mb-6 leading-relaxed">

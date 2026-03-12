@@ -9,6 +9,8 @@ export interface Job {
   progress: number;
   filePath?: string;
   fileName?: string;
+  title?: string;
+  thumbnail?: string;
   error?: string;
   createdAt: number;
 }
